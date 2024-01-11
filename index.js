@@ -1,21 +1,21 @@
 const express = require('express');
 const cors = require('cors');
+const SerialPort = require('serialport').SerialPort;
+const {ReadlineParser} = require('@serialport/parser-readline');
 const app = express();
-const port = 3000;
-
 app.use(cors());
 
+const port = 3000;
 
-let secondAdvance = 0;
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
+
+
 
 getTime = () => {
     let time = new Date();
-    let tiempo = time.getDate()+'/'+(time.getMonth()+1)+'/'+time.getFullYear()+'-'+time.getHours()+':'+time.getMinutes()+':'+(time.getSeconds()+secondAdvance);
-    secondAdvance = secondAdvance + 1;
-    if (secondAdvance >= 11) {
-        secondAdvance = 0;
-    }
-    
+    let tiempo = time.getDate()+'/'+(time.getMonth()+1)+'/'+time.getFullYear()+'-'+time.getHours()+':'+time.getMinutes()+':'+time.getSeconds();    
     return tiempo;
 }
 
@@ -52,14 +52,40 @@ getData = () => {
 }
 
 let dummyData = [];
+let sensorData;
+
+// Configurar el puerto serie (ajusta el nombre del puerto según tu configuración)
+const arduinoPort = new SerialPort({ 
+  path: 'COM3',
+  baudRate: 9600 
+});
+
+// Configurar el parser para leer líneas del puerto serie
+const parser = arduinoPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+
+// Manejar los datos leídos desde el puerto serie
+parser.on('data', (data) => {
+  console.log('Datos desde Arduino:', data);
+  sensorData = data;
+
+  // Enviar los datos a través de WebSocket a todos los clientes conectados
+  io.emit('arduinoData', data);
+});
+
 
 // Ruta "/" de tipo GET que devuelve un JSON con datos ficticios
 app.get('/', (req, res) => {
-    dummyData = getData();
+  dummyData = [{TemperatureC: sensorData, Date: getTime()}];
   res.json(dummyData);
 });
 
+
+// Configuración de Socket.IO para la comunicación en tiempo real
+io.on('connection', (socket) => {
+  console.log('Cliente conectado');
+});
+
 // Iniciar el servidor en el puerto especificado
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Servidor Express escuchando en http://localhost:${port}`);
 });
