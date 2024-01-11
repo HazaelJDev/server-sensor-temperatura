@@ -1,0 +1,17 @@
+{
+  "name": "servert-sensor-temp",
+  "version": "1.0.0",
+  "description": "Servidor que lee el puerto serial de un proyeco de arduino el cual envia la temperatura captadad por un sensor",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}
