@@ -51,8 +51,8 @@ getData = () => {
     ];
 }
 
-let dummyData = [];
-let sensorData;
+let temperatureData = [];
+let sensorDataList = [];
 
 // Configurar el puerto serie (ajusta el nombre del puerto según tu configuración)
 const arduinoPort = new SerialPort({ 
@@ -66,7 +66,8 @@ const parser = arduinoPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 // Manejar los datos leídos desde el puerto serie
 parser.on('data', (data) => {
   console.log('Datos desde Arduino:', data);
-  sensorData = data;
+  sensorDataList.push({TemperatureC: parseFloat(data), Date: getTime()});
+  
 
   // Enviar los datos a través de WebSocket a todos los clientes conectados
   io.emit('arduinoData', data);
@@ -75,8 +76,8 @@ parser.on('data', (data) => {
 
 // Ruta "/" de tipo GET que devuelve un JSON con datos ficticios
 app.get('/', (req, res) => {
-  dummyData = [{TemperatureC: sensorData, Date: getTime()}];
-  res.json(dummyData);
+  temperatureData = obtenerUltimosDiezElementos(sensorDataList);
+  res.json(temperatureData);
 });
 
 
